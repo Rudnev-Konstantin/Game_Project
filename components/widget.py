@@ -1,8 +1,21 @@
 import pygame
 
 
+class CollectionTypeError(TypeError):
+    def __init__(self, message="Предполагается использование коллекции.\n\tПример: (el, el), [el, el]"):
+        self.message = message
+        super().__init__(self.message)
+
+class ElementsError(CollectionTypeError):
+    def __init__(self, type, count, message="Неверное количество или тип элементов.\n\tПредполагаемые "):
+        self.type = type
+        self.count = count
+        self.message = message + f"количество - {self.count}, тип - {self.type}"
+        super().__init__(self.message)
+
+
 class Widget:
-    def __init__(self, surface, size=(0, 0), coordinates=(0, 0), color=(255, 255, 255), radius=0,
+    def __init__(self, surface, size=(0, 0), coordinates=(0, 0), color=(255, 255, 255, 255), radius=0,
                  padding=None, content=None):
         self.surface = surface
         
@@ -14,12 +27,12 @@ class Widget:
         
         try:
             self.assign_padding(padding)
-        except TypeError:
+        except TypeError as error:
             if padding is None:
                 self.padding_height = (0, 0)
                 self.padding_width = (0, 0)
             else:
-                raise TypeError()
+                raise error
         
         self.content = content
     
@@ -53,58 +66,62 @@ class Widget:
     
     def assign_coordinates(self, coordinates):
         if not (hasattr(coordinates, '__iter__')):
-            raise TypeError()
+            raise CollectionTypeError()
         
         if not (len(coordinates) == 2 and type(coordinates[0]) == type(coordinates[1]) == int):
-            raise TypeError()
+            raise ElementsError("int", 2)
         
         self.coordinates = coordinates
     
     def assign_size(self, size):
         if not (hasattr(size, '__iter__')):
-            raise TypeError()
+            raise CollectionTypeError()
         
         if not (len(size) == 2 and type(size[0]) == type(size[1]) == int):
-            raise TypeError()
+            raise ElementsError("int", 2)
         
         self.size = size
     
     def assign_radius(self, radius):
         if not (type(radius) == int):
-            raise TypeError()
+            raise TypeError("Предполагается числовое значение: int")
         
         self.radius = radius
     
     def assign_color(self, color):
         if not (hasattr(color, '__iter__')):
-            raise TypeError()
+            raise CollectionTypeError()
         
-        if not (len(color) == 3 and type(color[0]) == type(color[1]) == type(color[2]) == int):
-            raise TypeError()
+        if not (len(color) == 3 and type(color[0]) == type(color[1]) == type(color[2]) == int or
+                len(color) == 4 and
+                type(color[0]) == type(color[1]) == type(color[2]) == type(color[3]) == int):
+            raise ElementsError("int", "3 или 4")
         
         if not (max(color) <= 255 and min(color) >= 0):
-            raise ValueError()
+            raise ValueError("Значения величины канала находится в диапазоне: 0 <= value <= 255")
         
         self.color = color
     
     def assign_padding(self, padding):
         if not (hasattr(padding, '__iter__') or type(padding) == int):
-            raise TypeError()
+            raise TypeError("Предполагается использование коллекции или числа.\
+\n\tПример: (el, el), [el, el], int()")
         
         if type(padding) == int:
             self.padding_height = (padding, padding)
             self.padding_width = (padding, padding)
-        elif len(padding) == 1:
+        elif len(padding) == 1 and type(padding[0]) == int:
             self.padding_height = (padding[0], padding[0])
             self.padding_width = (padding[0], padding[0])
-        elif len(padding) == 2:
+        elif len(padding) == 2 and type(padding[0]) == type(padding[1]) == int:
             self.padding_height = (padding[0], padding[0])
             self.padding_width = (padding[1], padding[1])
-        elif len(padding) == 4:
+        elif len(padding) == 4 and (type(padding[0]) == type(padding[1]) == type(padding[2])
+                                    == type(padding[3]) == int):
             self.padding_height = (padding[0], padding[2])
             self.padding_width = (padding[3], padding[1])
         else:
-            raise TypeError()
+            raise ElementsError("int", "1, 2 или 4")
 
 
 class GridWidgets(Widget):
@@ -114,7 +131,7 @@ class GridWidgets(Widget):
         self.rows = rows
         self.cols = cols
         
-        self.border_color = (255, 255, 255)
+        self.border_color = (255, 255, 255, 255)
         
         self.visualization = False
     
@@ -141,7 +158,7 @@ class GridWidgets(Widget):
     
     def assign_visualization(self, state: bool):
         if not (type(state) == bool):
-            raise TypeError()
+            raise TypeError("Предполагается логическое значение: bool")
         
         self.visualization = state
 
