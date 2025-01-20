@@ -19,14 +19,14 @@ class Widget:
                  padding=None, content=None):
         self.surface = surface
         
-        self.assign_coordinates(coordinates)
-        self.assign_size(size)
-        self.assign_radius(radius)
+        self.set_coordinates(coordinates)
+        self.set_size(size)
+        self.set_radius(radius)
         
-        self.assign_color(color)
+        self.set_color(color)
         
         try:
-            self.assign_padding(padding)
+            self.set_padding(padding)
         except TypeError as error:
             if padding is None:
                 self.padding_height = (0, 0)
@@ -60,11 +60,11 @@ class Widget:
             content_x = self.coordinates[0] + self.padding_width[0]
             content_y = self.coordinates[1] + self.padding_height[0]
             
-            self.content.assign_coordinates((content_x, content_y))
-            self.content.assign_size(self.size)
+            self.content.set_coordinates((content_x, content_y))
+            self.content.set_size(self.size)
             self.content.draw()
     
-    def assign_coordinates(self, coordinates):
+    def set_coordinates(self, coordinates):
         if not (hasattr(coordinates, '__iter__')):
             raise CollectionTypeError()
         
@@ -73,7 +73,7 @@ class Widget:
         
         self.coordinates = coordinates
     
-    def assign_size(self, size):
+    def set_size(self, size):
         if not (hasattr(size, '__iter__')):
             raise CollectionTypeError()
         
@@ -82,13 +82,13 @@ class Widget:
         
         self.size = size
     
-    def assign_radius(self, radius):
+    def set_radius(self, radius):
         if not (type(radius) == int):
             raise TypeError("Предполагается числовое значение: int")
         
         self.radius = radius
     
-    def assign_color(self, color):
+    def set_color(self, color):
         if not (hasattr(color, '__iter__')):
             raise CollectionTypeError()
         
@@ -102,7 +102,7 @@ class Widget:
         
         self.color = color
     
-    def assign_padding(self, padding):
+    def set_padding(self, padding):
         if not (hasattr(padding, '__iter__') or type(padding) == int):
             raise TypeError("Предполагается использование коллекции или числа.\
 \n\tПример: (el, el), [el, el], int()")
@@ -156,7 +156,7 @@ class GridWidgets(Widget):
         for y in range(0, height, cell_height):
             pygame.draw.line(self.surface, self.border_color, (0, y), (width, y))
     
-    def assign_visualization(self, state: bool):
+    def set_visualization(self, state: bool):
         if not (type(state) == bool):
             raise TypeError("Предполагается логическое значение: bool")
         

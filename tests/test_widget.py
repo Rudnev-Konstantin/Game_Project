@@ -13,54 +13,71 @@ import components.widget as wd
 BACKGROUND_COLOR = (0, 0, 0)
 
 
+def game_loop_testing(func):
+    def wrapper(*args, **kwargs):
+        init_objects, event_cycle_conditions, rendering = func(*args, **kwargs)
+        
+        
+        pygame.init()
+        screen = pygame.display.set_mode(kwargs["size"], pygame.RESIZABLE)
+        
+        objects = init_objects(screen=screen)
+        
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                event_cycle_conditions(event=event, **objects)
+            
+            screen.fill(BACKGROUND_COLOR)
+            
+            rendering(**objects)
+            
+            pygame.display.flip()
+        pygame.quit()
+    
+    return wrapper
+
+
+@game_loop_testing
 def test_grid(size):
-    pygame.init()
-    screen = pygame.display.set_mode(size, pygame.RESIZABLE)
-    
-    grid = wd.GridWidgets(screen, size, 5, 5)
-    grid.assign_visualization(True)
-    
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.VIDEORESIZE:
-                size = event.size
-                grid.assign_size(size)
+    def init_objects(screen):
+        grid = wd.GridWidgets(screen, size, 5, 5)
+        grid.set_visualization(True)
         
-        screen.fill(BACKGROUND_COLOR)
-        
+        return {"grid": grid}
+    
+    def event_cycle_conditions(event, grid):
+        if event.type == pygame.VIDEORESIZE:
+            size = event.size
+            grid.set_size(size)
+    
+    def rendering(grid):
         grid.draw()
-        
-        pygame.display.flip()
-    pygame.quit()
+    
+    return init_objects, event_cycle_conditions, rendering
 
 
+@game_loop_testing
 def test_widget(size):
-    pygame.init()
-    screen = pygame.display.set_mode(size, pygame.RESIZABLE)
-    
-    widget = wd.Widget(screen, size=(int(size[0] * 0.6), int(size[1] * 0.4)), coordinates=(10, 10),
+    def init_objects(screen):
+        widget = wd.Widget(screen, size=(int(size[0] * 0.6), int(size[1] * 0.4)), coordinates=(10, 10),
                        radius=60, padding=(60, 30), content=wd.Widget(screen, color=(0, 255, 0)))
+        
+        return {"widget": widget}
     
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.VIDEORESIZE:
-                size = event.size
-                widget.assign_size((int(size[0] * 0.6), int(size[1] * 0.4)))
-        
-        screen.fill(BACKGROUND_COLOR)
-        
+    def event_cycle_conditions(event, widget):
+        if event.type == pygame.VIDEORESIZE:
+            size = event.size
+            widget.set_size((int(size[0] * 0.6), int(size[1] * 0.4)))
+    
+    def rendering(widget):
         widget.draw()
-        
-        pygame.display.flip()
-    pygame.quit()
+    
+    return init_objects, event_cycle_conditions, rendering
 
 
 if __name__ == '__main__':
-    test_grid((800, 400))
-    test_widget((800, 400))
+    test_grid(size=(800, 400))
+    test_widget(size=(800, 400))
