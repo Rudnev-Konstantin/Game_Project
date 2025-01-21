@@ -38,7 +38,7 @@ class Widget:
     
     def draw(self):
         x, y = self.coordinates
-        width, height = self.size[0] + sum(self.padding_width), self.size[1] + sum(self.padding_height)
+        width, height = self.size
         
         radius = self.radius if self.radius < min(width, height) / 2 else min(width, height) // 2
         
@@ -56,12 +56,16 @@ class Widget:
         pygame.draw.rect(self.surface, self.color, (x + radius, y, width - 2 * radius, height))
         pygame.draw.rect(self.surface, self.color, (x, y + radius, width, height - 2 * radius))
         
+        # отрисовка контента
         if self.content is not None:
             content_x = self.coordinates[0] + self.padding_width[0]
             content_y = self.coordinates[1] + self.padding_height[0]
             
+            width_content = self.size[0] - sum(self.padding_width)
+            height_content = self.size[1] - sum(self.padding_height)
+            
             self.content.set_coordinates((content_x, content_y))
-            self.content.set_size(self.size)
+            self.content.set_size((width_content, height_content))
             self.content.draw()
     
     def set_coordinates(self, coordinates):
@@ -133,28 +137,94 @@ class GridWidgets(Widget):
         
         self.border_color = (255, 255, 255, 255)
         
+        self.widgets = []
+        
         self.visualization = False
     
     def draw(self):
-        width, height = self.size
+        x_grid = self.coordinates[0] + self.padding_width[0]
+        y_grid = self.coordinates[1] + self.padding_height[0]
+        
+        width = self.size[0] - sum(self.padding_width)
+        height = self.size[1] - sum(self.padding_height)
         
         cell_width = width // self.cols
         cell_height = height // self.rows
         
         if self.visualization:
-            self.grid_visualization(width, height, cell_width, cell_height)
-        else:
-            pass
+            self.grid_visualization((x_grid, y_grid), (width, height), (cell_width, cell_height))
+        
+        for struct_widget in self.widgets:
+            widget = struct_widget["widget"]
+            coordinates, size = struct_widget["coordinates"], struct_widget["size"]
+            
+            real_value = lambda p_1, p_2: (cell_width * p_1, cell_height * p_2)
+            
+            coordinates = real_value(*coordinates)
+            coordinates = (coordinates[0] + x_grid, coordinates[1] + y_grid)
+            size = real_value(*size)
+            
+            widget.set_coordinates(coordinates)
+            widget.set_size(size)
+            widget.draw()
     
-    def grid_visualization(self, width, height, cell_width, cell_height):
+    def add_widget(self, widget: Widget, coordinates, size):
+        if not (type(widget) == Widget):
+            raise TypeError("Предполагаемое значение принадлежит классу: Widget")
+        
+        if not (hasattr(coordinates, '__iter__')):
+            raise CollectionTypeError()
+        if not (len(coordinates) == 2 and type(coordinates[0]) == type(coordinates[1]) == int):
+            raise ElementsError("int", 2)
+        
+        if not (hasattr(size, '__iter__')):
+            raise CollectionTypeError()
+        if not (len(size) == 2 and type(size[0]) == type(size[1]) == int):
+            raise ElementsError("int", 2)
+        
+        
+        vertical_border = coordinates[0] >= 0 and coordinates[0] + size[0] - 1 < self.cols
+        horizontal_border = coordinates[1] >= 0 and coordinates[1] + size[1] - 1 < self.rows
+        if not (vertical_border and horizontal_border):
+            raise ValueError("Добавляемый элемент выходит за границы сетки")
+        
+        for struct_widget in self.widgets:
+            intersections = [False, False]
+            for i in range(2):
+                point_1 = struct_widget["coordinates"][i]
+                point_2 = struct_widget["coordinates"][i] + struct_widget["size"][i] - 1
+                
+                if coordinates[i] <= point_1 <= coordinates[i] + size[i] - 1:
+                    intersections[i] = True
+                if coordinates[i] <= point_2 <= coordinates[i] + size[i] - 1:
+                    intersections[i] = True
+            if all(intersections):
+                raise ValueError("Добавляемый элемент пересекает другие элементы")
+        
+        
+        self.widgets.append({"widget": widget, "coordinates": coordinates, "size": size})
+    
+    def add_widgets(self, widgets):
+        try:
+            for struct_widget in widgets:
+                self.add_widget(*struct_widget)
+        except Exception as error:
+            raise error from Exception("Задайте Структуру вида: ((widget, coordinates, size), \
+((widget, coordinates, size), ...)")
+    
+    def grid_visualization(self, coordinates, size, cell):
+        x_grid, y_grid = coordinates
+        width, height = size
+        cell_width, cell_height = cell
+        
         if cell_height == 0 or cell_width == 0:
             return
         
-        for x in range(0, width, cell_width):
-            pygame.draw.line(self.surface, self.border_color, (x, 0), (x, height))
+        for x in range(x_grid, width + x_grid + 1, cell_width):
+            pygame.draw.line(self.surface, self.border_color, (x, y_grid), (x, height + y_grid))
         
-        for y in range(0, height, cell_height):
-            pygame.draw.line(self.surface, self.border_color, (0, y), (width, y))
+        for y in range(y_grid, height + y_grid + 1, cell_height):
+            pygame.draw.line(self.surface, self.border_color, (x_grid, y), (width + x_grid, y))
     
     def set_visualization(self, state: bool):
         if not (type(state) == bool):
