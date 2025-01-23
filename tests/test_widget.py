@@ -1,46 +1,14 @@
 import pygame
 
-
-import os
-import sys
-
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(parent_dir)
+import pytest
+import testing
 
 import components.widget as wd
 
 
-BACKGROUND_COLOR = (0, 0, 0)
-
-
-def game_loop_testing(func):
-    def wrapper(*args, **kwargs):
-        init_objects, event_cycle_conditions, rendering = func(*args, **kwargs)
-        
-        
-        pygame.init()
-        screen = pygame.display.set_mode(kwargs["size"], pygame.RESIZABLE)
-        
-        objects = init_objects(screen=screen)
-        
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                event_cycle_conditions(event=event, **objects)
-            
-            screen.fill(BACKGROUND_COLOR)
-            
-            rendering(**objects)
-            
-            pygame.display.flip()
-        pygame.quit()
-    
-    return wrapper
-
-
-@game_loop_testing
+@pytest.mark.parametrize("size", [(800, 450)])
+@testing.testing_wrapper
+@testing.game_loop_testing
 def test_grid(size):
     def init_objects(screen):
         grid = wd.GridWidgets(screen, 5, 5, size=size)
@@ -74,7 +42,9 @@ def test_grid(size):
     return init_objects, event_cycle_conditions, rendering
 
 
-@game_loop_testing
+@pytest.mark.parametrize("size", [(800, 450)])
+@testing.testing_wrapper
+@testing.game_loop_testing
 def test_widget(size):
     def init_objects(screen):
         widget = wd.Widget(screen, size=(int(size[0] * 0.6), int(size[1] * 0.4)), coordinates=(50, 50),
@@ -91,8 +61,3 @@ def test_widget(size):
         widget.draw()
     
     return init_objects, event_cycle_conditions, rendering
-
-
-if __name__ == '__main__':
-    test_grid(size=(800, 450))
-    test_widget(size=(800, 450))
