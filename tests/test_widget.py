@@ -43,7 +43,7 @@ def game_loop_testing(func):
 @game_loop_testing
 def test_grid(size):
     def init_objects(screen):
-        grid = wd.GridWidgets(screen, size, 5, 5)
+        grid = wd.GridWidgets(screen, 5, 5, size=size)
         grid.set_visualization(True)
         grid.set_padding(40)
         
@@ -94,5 +94,5 @@ def test_widget(size):
 
 
 if __name__ == '__main__':
-    test_grid(size=(800, 400))
-    test_widget(size=(800, 400))
+    test_grid(size=(800, 450))
+    test_widget(size=(800, 450))

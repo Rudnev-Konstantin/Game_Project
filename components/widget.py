@@ -128,8 +128,26 @@ class Widget:
             raise ElementsError("int", "1, 2 или 4")
 
 
+class ContainerWidget(Widget):
+    def __init__(self, fond, widget, padding=None):
+        fond_attributes = vars(fond).copy()
+        if padding is None:
+            padding = list(fond_attributes.pop("padding_height"))
+            padding += list(fond_attributes.pop("padding_width"))
+        else:
+            fond_attributes.pop("padding_height")
+            fond_attributes.pop("padding_width")
+            self.set_padding(padding)
+            padding = list(self.padding_height) + list(self.padding_width)
+        padding[1], padding[3] = padding[3], padding[1]
+        padding[2], padding[3] = padding[3], padding[2]
+        fond_attributes["padding"] = padding
+        fond_attributes["content"] = widget
+        super().__init__(**fond_attributes)
+
+
 class GridWidgets(Widget):
-    def __init__(self, surface, size, rows, cols):
+    def __init__(self, surface, rows, cols, size=(0, 0)):
         super().__init__(surface, size)
         
         self.rows = rows
@@ -169,7 +187,7 @@ class GridWidgets(Widget):
             widget.draw()
     
     def add_widget(self, widget: Widget, coordinates, size):
-        if not (type(widget) == Widget):
+        if not (isinstance(widget, Widget) or issubclass(type(widget), Widget)):
             raise TypeError("Предполагаемое значение принадлежит классу: Widget")
         
         if not (hasattr(coordinates, '__iter__')):
