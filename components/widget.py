@@ -58,11 +58,31 @@ class Widget:
         
         # отрисовка контента
         if self.content is not None:
-            content_x = self.coordinates[0] + self.padding_width[0]
-            content_y = self.coordinates[1] + self.padding_height[0]
+            if isinstance(self.padding_width[0], int):
+                padding_width = [self.padding_width[0]]
+            else:
+                padding_width = [int(self.padding_width[0] * width)]
             
-            width_content = self.size[0] - sum(self.padding_width)
-            height_content = self.size[1] - sum(self.padding_height)
+            if isinstance(self.padding_height[0], int):
+                padding_height = [self.padding_height[0]]
+            else:
+                padding_height = [int(self.padding_height[0] * height)]
+            
+            if isinstance(self.padding_width[1], int):
+                padding_width.append(self.padding_width[1])
+            else:
+                padding_width.append(int(self.padding_width[1] * width))
+            
+            if isinstance(self.padding_height[1], int):
+                padding_height.append(self.padding_height[1])
+            else:
+                padding_height.append(int(self.padding_height[1] * height))
+            
+            content_x = self.coordinates[0] + padding_width[0]
+            content_y = self.coordinates[1] + padding_height[0]
+            
+            width_content = self.size[0] - sum(padding_width)
+            height_content = self.size[1] - sum(padding_height)
             
             self.content.set_coordinates((content_x, content_y))
             self.content.set_size((width_content, height_content))
@@ -107,25 +127,29 @@ class Widget:
         self.color = color
     
     def set_padding(self, padding):
-        if not (hasattr(padding, '__iter__') or type(padding) == int):
+        if not (hasattr(padding, '__iter__') or isinstance(padding, (int, float))):
             raise TypeError("Предполагается использование коллекции или числа.\
-\n\tПример: (el, el), [el, el], int()")
+\n\tПример: (el, el), [el, el], int(), float()")
         
-        if type(padding) == int:
+        if hasattr(padding, '__iter__'):
+            for padding_item in padding:
+                if isinstance(padding_item, float) and not (0 <= padding_item <= 1):
+                    raise ValueError("Padding в частях от size находится в приделах: 0 <= padding <= 1")
+        
+        if isinstance(padding, (int, float)):
             self.padding_height = (padding, padding)
             self.padding_width = (padding, padding)
-        elif len(padding) == 1 and type(padding[0]) == int:
+        elif len(padding) == 1 and isinstance(padding[0], (int, float)):
             self.padding_height = (padding[0], padding[0])
             self.padding_width = (padding[0], padding[0])
-        elif len(padding) == 2 and type(padding[0]) == type(padding[1]) == int:
+        elif len(padding) == 2 and all(isinstance(p, (int, float)) for p in padding):
             self.padding_height = (padding[0], padding[0])
             self.padding_width = (padding[1], padding[1])
-        elif len(padding) == 4 and (type(padding[0]) == type(padding[1]) == type(padding[2])
-                                    == type(padding[3]) == int):
+        elif len(padding) == 4 and all(isinstance(p, (int, float)) for p in padding):
             self.padding_height = (padding[0], padding[2])
             self.padding_width = (padding[3], padding[1])
         else:
-            raise ElementsError("int", "1, 2 или 4")
+            raise ElementsError("int, float", "1, 2 или 4")
 
 
 class ContainerWidget(Widget):
@@ -144,6 +168,55 @@ class ContainerWidget(Widget):
         fond_attributes["padding"] = padding
         fond_attributes["content"] = widget
         super().__init__(**fond_attributes)
+
+
+class TextWidget(Widget):
+    def __init__(self, surface, size=(0, 0), coordinates=(0, 0), color=(255, 255, 255, 255),
+                 text=''):
+        super().__init__(surface, size=size, coordinates=coordinates, color=color)
+        self.set_text(text)
+        
+        self.font_size = 1
+    
+    def draw(self):
+        font = pygame.font.Font(None, self.font_size)
+        text_surface = font.render(self.text, True, (0, 0, 0))
+        text_width, text_height = text_surface.get_size()
+        
+        if text_width < self.size[0] or text_height < self.size[1]:
+            while True:
+                font = pygame.font.Font(None, self.font_size)
+                text_surface = font.render(self.text, True, (0, 0, 0))
+                text_width, text_height = text_surface.get_size()
+                
+                if text_width > self.size[0] or text_height > self.size[1]:
+                    break
+                
+                self.font_size += 1
+            
+            font = pygame.font.Font(None, self.font_size)
+            text_surface = font.render(self.text, True, self.color)
+            self.surface.blit(text_surface, self.coordinates)
+        else:
+            while True:
+                font = pygame.font.Font(None, self.font_size)
+                text_surface = font.render(self.text, True, (0, 0, 0))
+                text_width, text_height = text_surface.get_size()
+                
+                if text_width < self.size[0] or text_height < self.size[1]:
+                    break
+                
+                self.font_size -= 1
+            
+            font = pygame.font.Font(None, self.font_size)
+            text_surface = font.render(self.text, True, self.color)
+            self.surface.blit(text_surface, self.coordinates)
+    
+    def set_text(self, text):
+        if not (type(text) == str):
+            raise TypeError("Предполагается строковое значение: str")
+        
+        self.text = text
 
 
 class GridWidgets(Widget):

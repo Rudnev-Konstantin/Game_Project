@@ -1,3 +1,27 @@
+"""
+## Test syntax:
+
+@pytest.mark.parametrize("param, ...", [value, ...])
+@testing.testing_wrapper
+@testing.game_loop_testing
+ def test_widget(param...):
+    def init_objects(param...):
+        object = ...
+         ...
+
+        return {"object": object, ...}
+
+    def event_cycle_conditions(event, param...):
+        if event...:
+            ...
+
+    def rendering(param...):
+        ...
+
+    return init_objects, event_cycle_conditions, rendering
+"""
+
+
 import pygame
 
 

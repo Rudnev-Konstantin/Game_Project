@@ -61,3 +61,33 @@ def test_widget(size):
         widget.draw()
     
     return init_objects, event_cycle_conditions, rendering
+
+
+@pytest.mark.parametrize("size", [(800, 450)])
+@testing.testing_wrapper
+@testing.game_loop_testing
+def test_widget_mini_game(size):
+    def init_objects(screen):
+        grid_mini_game = wd.GridWidgets(screen, 7, 6)
+        widget_mini_game = wd.Widget(screen,
+                                     size=(int(size[0] * 0.6), int(size[1] * 0.4)), coordinates=(50, 50), radius=20, color=(125, 125, 125), content=grid_mini_game)
+        
+        widget_image_mini_game = wd.Widget(screen, radius=20, padding=(0.4, 0.43),
+                                           content=wd.TextWidget(screen, text="image", color=(0, 0, 0)))
+        grid_mini_game.add_widget(widget_image_mini_game, (0, 0), (6, 4))
+        
+        widget_name_mini_game = wd.TextWidget(screen, text="Name", color=(0, 0, 0))
+        container_name = wd.ContainerWidget(widget_mini_game, widget_name_mini_game, padding=(0, 0.25))
+        grid_mini_game.add_widget(container_name, (2, 5), (2, 1))
+        
+        return {"widget_mini_game": widget_mini_game}
+    
+    def event_cycle_conditions(event, widget_mini_game):
+        if event.type == pygame.VIDEORESIZE:
+            size = event.size
+            widget_mini_game.set_size((int(size[0] * 0.6), int(size[1] * 0.4)))
+    
+    def rendering(widget_mini_game):
+        widget_mini_game.draw()
+    
+    return init_objects, event_cycle_conditions, rendering
