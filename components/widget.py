@@ -154,7 +154,13 @@ class Widget:
 
 class ContainerWidget(Widget):
     def __init__(self, fond, widget, padding=None):
-        fond_attributes = vars(fond).copy()
+        base_attributes = vars(Widget(None)).copy()
+        attributes = vars(fond).copy()
+        
+        fond_attributes = dict()
+        for attribute in attributes:
+            if attribute in base_attributes:
+                fond_attributes[attribute] = attributes[attribute]
         if padding is None:
             padding = list(fond_attributes.pop("padding_height"))
             padding += list(fond_attributes.pop("padding_width"))
@@ -197,7 +203,7 @@ class TextWidget(Widget):
             font = pygame.font.Font(None, self.font_size)
             text_surface = font.render(self.text, True, self.color)
             self.surface.blit(text_surface, self.coordinates)
-        else:
+        elif text_width > self.size[0] or text_height > self.size[1]:
             while True:
                 font = pygame.font.Font(None, self.font_size)
                 text_surface = font.render(self.text, True, (0, 0, 0))
@@ -325,4 +331,13 @@ class GridWidgets(Widget):
 
 
 class WidgetMiniGame(Widget):
-    pass
+    def __init__(self, surface, size=(0, 0), coordinates=(0, 0), color=(255, 255, 255, 255), radius=0, padding=None, content=None, path="mini_games/"):
+        super().__init__(surface, size, coordinates, color, radius, padding, content)
+        
+        self.path = path
+    
+    def set_path(self, path):
+        self.path += path + "/main.py"
+    
+    def is_tach(self):
+        pass
